@@ -36,17 +36,20 @@
 - [x] 直接在編輯器內顯示 AI 建議
 - [x] Diff 預覽 (原始 vs 修改後)
 - [x] 接受/拒絕修改按鈕
-- [ ] 快捷鍵支援 (Cmd+I / Ctrl+I)
+- [x] 快捷鍵支援 (Cmd+I / Ctrl+I)
 
 ### Prompt Template
-- [ ] 內建常用 Prompt 模板
-  - [ ] 解釋程式碼
-  - [ ] 重構程式碼
-  - [ ] 新增註解
-  - [ ] 尋找 Bug
-  - [ ] 撰寫測試
-- [ ] 自訂 Prompt 模板功能
-- [ ] Prompt 變數替換 (如 `{selected_code}`)
+- [x] 內建常用 Prompt 模板
+  - [x] 解釋程式碼
+  - [x] 重構程式碼
+  - [x] 新增註解
+  - [x] 尋找 Bug
+  - [x] 撰寫測試
+  - [x] 效能優化
+  - [x] 轉換語言
+  - [x] 生成文件
+- [x] 自訂 Prompt 模板功能
+- [x] Prompt 變數替換 (如 `{selected_code}`)
 
 ### Diff 預覽
 - [x] 使用 VSCode Diff Editor 顯示變更
