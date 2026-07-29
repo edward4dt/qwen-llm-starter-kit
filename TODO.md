@@ -71,19 +71,19 @@
 - [ ] LiteLLM 日誌驗證
 
 ### @ Directory Reference (#26)
-- [ ] 新增 `getAllFilesInDirectory` 遞迴讀取函數
-- [ ] 新增 `isValidFile` 檔案過濾邏輯 (排除 node_modules, .git, 二進位檔等)
-- [ ] 新增 `triggerDirectorySelection` 目錄選擇器 (使用 vscode.window.showOpenDialog)
-- [ ] 新增 `injectDirectoryContext` 批次註入邏輯 (含 Token 限制)
-- [ ] 修改 `@` 觸發邏輯以支援目錄選擇 (提供「選擇檔案」/「選擇目錄」選項)
-- [ ] 修改消息送出邏輯以包含目錄上下文
-- [ ] 新增進度提示 (vscode.window.withProgress)
-- [ ] 新增檔案預覽確認對話框
-- [ ] 新增快捷鍵 (Ctrl+Shift+D / Cmd+Shift+D)
-- [ ] 擴充 ChatMessage.context.references 以支援多檔案
-- [ ] 實作檔案數量上限 (預設 10 個)
-- [ ] 實作單一檔案大小上限 (預設 50KB)
-- [ ] 實作總 Token 數上限 (預設 50,000)
+- [x] 新增 `getAllFilesInDirectory` 遞迴讀取函數
+- [x] 新增 `isValidFile` 檔案過濾邏輯 (排除 node_modules, .git, 二進位檔等)
+- [x] 新增 `triggerDirectorySelection` 目錄選擇器 (使用 vscode.window.showOpenDialog)
+- [x] 新增 `injectDirectoryContext` 批次註入邏輯 (含 Token 限制)
+- [x] 修改 `@` 觸發邏輯以支援目錄選擇 (提供「選擇檔案」/「選擇目錄」選項)
+- [x] 修改消息送出邏輯以包含目錄上下文
+- [x] 新增進度提示 (vscode.window.withProgress)
+- [x] 新增檔案預覽確認對話框
+- [x] 新增快捷鍵 (Ctrl+Shift+D / Cmd+Shift+D)
+- [x] 擴充 ChatMessage.context.references 以支援多檔案
+- [x] 實作檔案數量上限 (預設 10 個)
+- [x] 實作單一檔案大小上限 (預設 50KB)
+- [x] 實作總 Token 數上限 (預設 50,000)
 - [ ] 單位測試與整合測試
 
 ### Configuration UI (#21)
