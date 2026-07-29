@@ -366,24 +366,62 @@ export class FileReferenceProvider {
     }
 
     /**
-     * Format file reference for injection into prompt
+     * Format file reference for injection into prompt (structured format)
      */
     formatFileReference(reference: FileReference): string {
+        const fileName = reference.filePath.split(/[\\/]/).pop() || reference.filePath;
         const langMarker = reference.language || '';
-        return `## 參考檔案：${reference.filePath}\n\`\`\`${langMarker}\n${reference.content}\n\`\`\``;
+        return `[FILE: ${fileName}]\n\`\`\`${langMarker}\n${reference.content}\n\`\`\``;
     }
 
     /**
-     * Inject file references into user message
+     * Format directory context for injection into prompt (structured format)
      */
-    injectFileContext(message: string, references: FileReference[]): string {
-        if (references.length === 0) {
-            return message;
-        }
+    injectDirectoryContext(fileRefs: FileReference[]): string {
+        if (fileRefs.length === 0) return '';
+
+        // Group files by directory
+        const dirGroups: Record<string, FileReference[]> = {};
+        fileRefs.forEach(fileRef => {
+            const parts = fileRef.filePath.split(/[\\/]/);
+            const dirPath = parts.slice(0, -1).join('/');
+            if (!dirGroups[dirPath]) dirGroups[dirPath] = [];
+            dirGroups[dirPath].push(fileRef);
+        });
+
+        // Generate structured references
+        const dirContexts = Object.entries(dirGroups).map(([dirPath, files]) => {
+            const dirName = dirPath.split('/').pop() || dirPath || 'root';
+            const fileList = files.map(f => {
+                const fileName = f.filePath.split(/[\\/]/).pop() || f.filePath;
+                return `- [FILE: ${fileName}]`;
+            }).join('\n');
+
+            const fileContents = files.map(f => this.formatFileReference(f)).join('\n\n');
+
+            return `[DIRECTORY: ${dirName}]\n包含檔案：\n${fileList}\n\n${fileContents}`;
+        });
+
+        return dirContexts.join('\n\n---\n\n');
+    }
+
+    /**
+     * Inject file references into user message (structured format)
+     */
+    injectFileContext(message: string, fileRefs: FileReference[]): string {
+        if (fileRefs.length === 0) return message;
+
+        // Filter out directory references (they are handled separately)
+        const fileOnlyRefs = fileRefs.filter(f => !f.isDirectory);
         
-        const contextParts = references.map(ref => this.formatFileReference(ref));
-        const context = contextParts.join('\n\n');
+        if (fileOnlyRefs.length === 0) return message;
+
+        // Create structured file contexts
+        const fileContexts = fileOnlyRefs.map(fileRef => this.formatFileReference(fileRef)).join('\n\n');
+
+        // Remove @file patterns from original message
+        const cleanedMessage = message.replace(/@[^\s]+/g, '').trim();
         
-        return `${context}\n\n---\n\n使用者問題：${message}`;
+        return `${fileContexts}\n\n[QUESTION]\n${cleanedMessage}`;
     }
 }
