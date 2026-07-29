@@ -121,45 +121,49 @@
 
 ---
 
-## 🔧 v2.8 (規劃中 - 模型路由器重構)
+## ✅ v2.8 (已完成 - 模型路由器重構)
 
 ### 多階段模型路由 (#35)
-- [ ] 將單一 `coding` model group 拆分為多個 router
-  - [ ] `planner`: Mistral Thinking (深度推理、架構設計)
-  - [ ] `coder`: Groq Llama 3.3 70B (快速回應、程式生成)
-  - [ ] `reviewer`: Qwen Free (Code Review、說明、文件整理)
-  - [ ] `offline`: Ollama (離線備援)
+- [x] 將單一 `coding` model group 拆分為多個 router
+  - [x] `planner`: Mistral Thinking (深度推理、架構設計)
+  - [x] `coder`: Groq Llama 3.3 70B (快速回應、程式生成)
+  - [x] `reviewer`: Qwen Free (Code Review、說明、文件整理)
+  - [x] `offline`: Ollama (離線備援)
 - [ ] 實現工作模式選擇 UI
   - [ ] Planning 模式
   - [ ] Coding 模式
   - [ ] Review 模式
   - [ ] Explain 模式
-- [ ] 不同模式對應不同模型與參數
-  - [ ] Planning: Mistral, enable_thinking=true, max_tokens=8192
-  - [ ] Coding: Groq Llama 3.3, enable_thinking=false, max_tokens=2048
+- [x] 不同模式對應不同模型與參數
+  - [x] Planning: Mistral, enable_thinking=true, max_tokens=8192
+  - [x] Coding: Groq Llama 3.3, enable_thinking=false, max_tokens=2048
   - [ ] Review: Groq Llama 3.3, enable_thinking=false, max_tokens=4096
   - [ ] Explain: Qwen Free, enable_thinking=false, max_tokens=2048
 
 ### LiteLLM 配置更新
-- [ ] 更新 litellm.yaml 支持多 model groups
-- [ ] 實現多層 fallback 機制
-  - [ ] planner → coding → coding-free → ollama
-- [ ] 指定 OpenRouter 免費 Provider
-  - [ ] qwen/qwen3-coder:free
+- [x] 更新 litellm.yaml 支持多 model groups
+- [x] 實現多層 fallback 機制
+  - [x] planner → coder → reviewer → offline
+- [x] 指定 OpenRouter 免費 Provider
+  - [x] qwen/qwen3-coder:free
   - [ ] deepseek/deepseek-r1:free
-- [ ] 動態 max_tokens 設定
-  - [ ] 避免預設 32000 tokens 導致 402 錯誤
-  - [ ] 根據工作類型設定合適的 token 限制
+- [x] 動態 max_tokens 設定
+  - [x] 避免預設 32000 tokens 導致 402 錯誤
+  - [x] 根據工作類型設定合適的 token 限制
 
 ### Thinking 參數控制
-- [ ] 僅對 `planner` 模型啟用 `enable_thinking`
-- [ ] 確保 `enable_thinking` 不會傳遞給不支援的模型 (如 Groq)
-- [ ] 在 Extension 端根據 model 名稱動態調整請求參數
+- [x] 僅對 `planner` 模型啟用 `enable_thinking`
+- [x] 確保 `enable_thinking` 不會傳遞給不支援的模型 (如 Groq)
+- [x] 在 Extension 端根據 model 名稱動態調整請求參數
 
 ### 錯誤處理優化
-- [ ] 處理 `enable_thinking is unsupported` 錯誤
-- [ ] 處理 OpenRouter 402 Payment Required 錯誤
+- [x] 處理 `enable_thinking is unsupported` 錯誤
+- [x] 處理 OpenRouter 402 Payment Required 錯誤
 - [ ] 提供更明確的錯誤訊息與建議
+
+**Release**: v2.8.0 (TBD)
+**PR**: #36
+**Issues**: #35
 
 ---
 
