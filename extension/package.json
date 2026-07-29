@@ -3,7 +3,7 @@
   "displayName": "AI Assistant with LiteLLM",
   "description": "VSCode AI Extension using LiteLLM Proxy with automatic fallback",
   "version": "0.1.0",
-  "publisher": "your-publisher-name",
+  "publisher": "edward4dt",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -16,6 +16,13 @@
     "onStartupFinished"
   ],
   "main": "./out/extension.js",
+  "files": [
+    "out",
+    "resources",
+    "package.json",
+    "README.md",
+    "LICENSE"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/edward4dt/qwen-llm-starter-kit.git"
@@ -28,7 +35,7 @@
         {
           "id": "ai-assistant",
           "title": "AI Assistant",
-          "icon": "$(comment-discussion)"
+          "icon": "resources/icon.svg"
         }
       ]
     },
