@@ -61,11 +61,11 @@
 ## 🔧 v2.5 (新增功能 - 使用者體驗與效能提升)
 
 ### @ File Reference (#20)
-- [ ] `@` 觸發的文件選擇器
-- [ ] 檔案內容註入到上下文
-- [ ] ChatMessage 類型擴充支援 context.references
+- [x] `@` 觸發的文件選擇器
+- [x] 檔案內容註入到上下文
+- [x] ChatMessage 類型擴充支援 context.references
 - [ ] `@` 自動補全功能
-- [ ] 檔案大小限制 (< 10KB)
+- [x] 檔案大小限制 (< 10KB)
 - [ ] LiteLLM Proxy 自訂上下文驗證
 - [ ] 本地功能測試
 - [ ] LiteLLM 日誌驗證
