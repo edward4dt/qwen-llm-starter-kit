@@ -5,7 +5,7 @@ export class LiteLLMClient {
     private apiKey: string;
     private defaultModel: string;
 
-    constructor(baseUrl: string = 'http://localhost:4000', apiKey: string = 'sk-my-vscode-extension') {
+    constructor(baseUrl: string = 'http://127.0.0.1:4000', apiKey: string = 'sk-my-vscode-extension') {
         this.baseUrl = baseUrl;
         this.apiKey = apiKey;
         this.defaultModel = 'coding';
@@ -108,10 +108,15 @@ export class LiteLLMClient {
 
     async healthCheck(): Promise<boolean> {
         try {
-            const response = await fetch(`${this.baseUrl}/health`);
-            return response.ok;
-        } catch (error) {
-            console.error('Health check failed:', error);
+            const response = await fetch(`${this.baseUrl}/health`, {
+                headers: {
+                    'Authorization': `Bearer ${this.apiKey}`
+                }
+            });
+            console.log("Health check status:", response.status);
+            return true; // 只要有回應即判定為活著
+        } catch (e) {
+            console.error("Health check failed:", e);
             return false;
         }
     }

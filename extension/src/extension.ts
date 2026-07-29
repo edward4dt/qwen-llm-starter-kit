@@ -91,7 +91,7 @@ export function activate(context: vscode.ExtensionContext) {
         if (isHealthy) {
             vscode.window.showInformationMessage('✅ LiteLLM Proxy 運行正常！');
         } else {
-            vscode.window.showErrorMessage('❌ LiteLLM Proxy 無法連接。請確認 Docker 容器是否運行在 http://localhost:4000');
+            vscode.window.showErrorMessage('❌ LiteLLM Proxy 無法連接。請確認 Docker 容器是否運行在 http://127.0.0.1:4000');
         }
     });
 
