@@ -1,6 +1,17 @@
+export interface FileReference {
+    filePath: string;
+    content: string;
+    language?: string;
+}
+
+export interface ChatMessageContext {
+    references?: FileReference[];
+}
+
 export interface ChatMessage {
     role: 'system' | 'user' | 'assistant';
     content: string;
+    context?: ChatMessageContext;
 }
 
 export interface ChatCompletionRequest {

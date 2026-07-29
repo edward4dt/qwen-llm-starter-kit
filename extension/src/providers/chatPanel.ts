@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { LiteLLMClient } from '../utils/litellm-client';
-import { ChatMessage } from '../types';
+import { ChatMessage, FileReference } from '../types';
+import { FileReferenceProvider } from '../utils/file-reference';
 
 export class ChatPanelProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'ai-assistant.chatPanel';
@@ -8,12 +9,15 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
     private _view?: vscode.WebviewView;
     private _client: LiteLLMClient;
     private _messages: ChatMessage[] = [];
+    private _fileRefProvider: FileReferenceProvider;
+    private _pendingFileRefs: FileReference[] = [];
     
     constructor(
         private readonly _extensionUri: vscode.Uri,
         private readonly _context: vscode.ExtensionContext
     ) {
         this._client = new LiteLLMClient();
+        this._fileRefProvider = new FileReferenceProvider();
     }
     
     public resolveWebviewView(
@@ -34,23 +38,62 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
         webviewView.webview.onDidReceiveMessage(async (message) => {
             switch (message.type) {
                 case 'sendMessage':
-                    await this._handleUserMessage(message.text);
+                    await this._handleUserMessage(message.text, message.fileRefs);
                     break;
                 case 'clearChat':
                     this._messages = [];
                     this._updateChatHistory();
                     break;
+                case 'triggerFilePicker':
+                    await this._handleFilePickerTrigger();
+                    break;
             }
         });
     }
     
-    private async _handleUserMessage(text: string): Promise<void> {
-        if (!text.trim()) {
+    private async _handleFilePickerTrigger(): Promise<void> {
+        try {
+            const fileRefs = await this._fileRefProvider.showFilePicker();
+            if (fileRefs.length > 0) {
+                this._pendingFileRefs.push(...fileRefs);
+                this._view?.webview.postMessage({ 
+                    type: 'fileRefSelected', 
+                    files: fileRefs.map(f => ({ path: f.filePath, language: f.language }))
+                });
+            }
+        } catch (error) {
+            console.error('Error selecting file:', error);
+            this._view?.webview.postMessage({ 
+                type: 'error', 
+                error: `選擇檔案時發生錯誤：${error instanceof Error ? error.message : '未知錯誤'}` 
+            });
+        }
+    }
+    
+    private async _handleUserMessage(text: string, fileRefs?: FileReference[]): Promise<void> {
+        if (!text.trim() && (!fileRefs || fileRefs.length === 0)) {
             return;
         }
         
+        // Combine pending file refs with any passed in
+        const allFileRefs = [...this._pendingFileRefs, ...(fileRefs || [])];
+        this._pendingFileRefs = []; // Clear pending after use
+        
+        let finalText = text;
+        let contextReferences: FileReference[] = [];
+        
+        // If there are file references, inject them into the message
+        if (allFileRefs.length > 0) {
+            contextReferences = allFileRefs;
+            finalText = this._fileRefProvider.injectFileContext(text, allFileRefs);
+        }
+        
         // Add user message to history
-        const userMessage: ChatMessage = { role: 'user', content: text };
+        const userMessage: ChatMessage = { 
+            role: 'user', 
+            content: finalText,
+            context: contextReferences.length > 0 ? { references: contextReferences } : undefined
+        };
         this._messages.push(userMessage);
         this._updateChatHistory();
         
@@ -141,7 +184,13 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
         }
         .input-container {
             display: flex;
+            flex-direction: column;
             gap: 8px;
+        }
+        .input-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
         }
         #messageInput {
             flex: 1;
@@ -162,6 +211,35 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
         button:hover {
             background-color: var(--vscode-button-hoverBackground);
         }
+        .file-ref-btn {
+            padding: 8px 12px;
+            background-color: var(--vscode-descriptionForeground);
+            color: var(--vscode-button-foreground);
+            font-weight: bold;
+        }
+        .file-ref-btn:hover {
+            background-color: var(--vscode-button-background);
+        }
+        .file-refs-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .file-tag {
+            background-color: var(--vscode-badge-background);
+            color: var(--vscode-badge-foreground);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .file-tag .remove {
+            cursor: pointer;
+            font-weight: bold;
+        }
         .progress {
             color: var(--vscode-descriptionForeground);
             font-style: italic;
@@ -180,9 +258,13 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
 <body>
     <div class="chat-container" id="chatContainer"></div>
     <div class="input-container">
-        <input type="text" id="messageInput" placeholder="輸入問題..." />
-        <button id="sendBtn">發送</button>
-        <button id="clearBtn">清除</button>
+        <div class="input-row">
+            <button id="fileRefBtn" class="file-ref-btn" title="附加檔案參考">@</button>
+            <input type="text" id="messageInput" placeholder="輸入問題... (使用 @ 選擇檔案)" />
+            <button id="sendBtn">發送</button>
+            <button id="clearBtn">清除</button>
+        </div>
+        <div class="file-refs-display" id="fileRefsDisplay"></div>
     </div>
     
     <script>
@@ -191,6 +273,10 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
         const clearBtn = document.getElementById('clearBtn');
+        const fileRefBtn = document.getElementById('fileRefBtn');
+        const fileRefsDisplay = document.getElementById('fileRefsDisplay');
+        
+        let pendingFileRefs = [];
         
         function addMessage(content, role) {
             const div = document.createElement('div');
@@ -204,23 +290,61 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
             chatContainer.innerHTML = '';
         }
         
-        sendBtn.addEventListener('click', () => {
+        function updateFileRefsDisplay() {
+            fileRefsDisplay.innerHTML = '';
+            pendingFileRefs.forEach((file, index) => {
+                const tag = document.createElement('span');
+                tag.className = 'file-tag';
+                const fileName = file.path.split('/').pop() || file.path;
+                tag.innerHTML = \`@<span>\${fileName}</span><span class="remove" onclick="removeFileRef(\${index})">×</span>\`;
+                fileRefsDisplay.appendChild(tag);
+            });
+        }
+        
+        window.removeFileRef = function(index) {
+            pendingFileRefs.splice(index, 1);
+            updateFileRefsDisplay();
+        };
+        
+        function sendCurrentMessage() {
             const text = messageInput.value.trim();
-            if (text) {
-                vscode.postMessage({ type: 'sendMessage', text });
+            if (text || pendingFileRefs.length > 0) {
+                vscode.postMessage({ 
+                    type: 'sendMessage', 
+                    text,
+                    fileRefs: pendingFileRefs.map(f => ({ filePath: f.path, content: '', language: f.language }))
+                });
                 messageInput.value = '';
+                pendingFileRefs = [];
+                updateFileRefsDisplay();
             }
-        });
+        }
+        
+        sendBtn.addEventListener('click', sendCurrentMessage);
         
         messageInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                sendBtn.click();
+                sendCurrentMessage();
             }
+        });
+        
+        // Handle @ key to trigger file picker
+        messageInput.addEventListener('input', (e) => {
+            const text = messageInput.value;
+            if (text.endsWith('@')) {
+                vscode.postMessage({ type: 'triggerFilePicker' });
+            }
+        });
+        
+        fileRefBtn.addEventListener('click', () => {
+            vscode.postMessage({ type: 'triggerFilePicker' });
         });
         
         clearBtn.addEventListener('click', () => {
             vscode.postMessage({ type: 'clearChat' });
             clearMessages();
+            pendingFileRefs = [];
+            updateFileRefsDisplay();
         });
         
         window.addEventListener('message', (event) => {
@@ -260,6 +384,13 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
                     errorDiv.className = 'error';
                     errorDiv.textContent = message.error;
                     chatContainer.insertBefore(errorDiv, chatContainer.firstChild);
+                    break;
+                case 'fileRefSelected':
+                    message.files.forEach(file => {
+                        pendingFileRefs.push(file);
+                    });
+                    updateFileRefsDisplay();
+                    messageInput.focus();
                     break;
             }
         });
