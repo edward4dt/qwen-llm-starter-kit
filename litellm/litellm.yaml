@@ -1,19 +1,36 @@
 model_list:
-  # Primary: Groq (Llama-3.3-70b) - Fast and free tier
-  - model_name: coding
+  # Planner: Mistral Medium Thinking - For architecture design, requirements analysis
+  - model_name: planner
+    litellm_params:
+      model: mistral/medium-thinking
+      api_key: os.environ/MISTRAL_API_KEY
+      max_tokens: 8192
+
+  # Coder: Groq (Llama-3.3-70b) - Fast code generation, debugging
+  - model_name: coder
     litellm_params:
       model: groq/llama-3.3-70b-versatile
       api_key: os.environ/GROQ_API_KEY
+      max_tokens: 2048
 
-  # Fallback: OpenRouter (Qwen3-Coder)
-  - model_name: coding-fallback
+  # Reviewer: OpenRouter (Qwen3-Coder) - Code review, documentation
+  - model_name: reviewer
     litellm_params:
-      model: openrouter/qwen/qwen3-coder
+      model: openrouter/qwen/qwen3-coder:free
       api_key: os.environ/OPENROUTER_API_KEY
+      max_tokens: 2048
+
+  # Offline: Ollama (Llama3.2) - Local fallback
+  - model_name: offline
+    litellm_params:
+      model: ollama/llama3.2
+      max_tokens: 2048
 
 router_settings:
   fallbacks:
-    - {"coding": ["coding-fallback"]}
+    - {"planner": ["coder"]}
+    - {"coder": ["reviewer"]}
+    - {"reviewer": ["offline"]}
   set_verbose: true
 
 litellm_settings:

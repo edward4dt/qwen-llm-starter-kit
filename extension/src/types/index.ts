@@ -15,12 +15,15 @@ export interface ChatMessage {
     context?: ChatMessageContext;
 }
 
+export type WorkMode = 'planning' | 'coding' | 'review' | 'explain';
+
 export interface ChatCompletionRequest {
     model: string;
     messages: ChatMessage[];
     max_tokens?: number;
     temperature?: number;
     stream?: boolean;
+    enable_thinking?: boolean;
 }
 
 export interface ChatCompletionResponse {
