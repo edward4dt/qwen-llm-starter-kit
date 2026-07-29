@@ -58,6 +58,62 @@
 
 ---
 
+## 🔧 v2.5 (新增功能 - 使用者體驗與效能提升)
+
+### @ File Reference (#20)
+- [ ] `@` 觸發的文件選擇器
+- [ ] 檔案內容註入到上下文
+- [ ] ChatMessage 類型擴充支援 context.references
+- [ ] `@` 自動補全功能
+- [ ] 檔案大小限制 (< 10KB)
+- [ ] LiteLLM Proxy 自訂上下文驗證
+- [ ] 本地功能測試
+- [ ] LiteLLM 日誌驗證
+
+### Configuration UI (#21)
+- [ ] package.json configuration schema 定義
+- [ ] 遷移 .env 設定到 VSCode settings
+- [ ] 支援設定選項
+  - [ ] LiteLLM Proxy URL
+  - [ ] Master Key
+  - [ ] 預設模型
+  - [ ] Temperature
+  - [ ] Max Tokens
+- [ ] 設定驗證
+- [ ] 更新 README 設定說明
+
+### SecretStorage (#22)
+- [ ] 使用 vscode.SecretStorage API 儲存 API Keys
+- [ ] 建立命令管理 Master Key (set/update/remove)
+- [ ] 現有 .env 用戶遷移邏輯
+- [ ] 缺少憑證時的錯誤處理
+
+### Chat UI Enhancements (#23)
+- [ ] Markdown 渲染 (markdown-it/marked)
+- [ ] 程式碼語法高亮 (highlight.js/Prism)
+- [ ] 複製程式碼按鈕
+- [ ] 重新產生回應按鈕
+- [ ] 打字機效果優化
+- [ ] 對話匯出功能 (Markdown/JSON)
+
+### Performance Optimization (#24)
+- [ ] 請求快取機制 (TTL)
+- [ ] 對話歷史壓縮
+- [ ] Token 計數器整合
+- [ ] Token 限制警告
+- [ ] Webview 資源懶加載
+
+### Testing & Documentation (#25)
+- [ ] 單元測試框架 (Jest/Mocha)
+- [ ] LiteLLM client 單元測試
+- [ ] Prompt templates 單元測試
+- [ ] 聊天功能整合測試
+- [ ] README 使用文件
+- [ ] TypeDoc API 文件
+- [ ] 內聯程式碼註解
+
+---
+
 ## 🔮 v3.0 (未來規劃 - 高階功能)
 
 ### OpenHands 整合
@@ -130,15 +186,15 @@
 
 ## 🎯 優先順序
 
-1. **高優先級** (v2.0 核心功能)
-   - Inline Edit + Diff 預覽
-   - Prompt Templates
-   - 設定頁面
+1. **高優先級** (v2.5 核心功能)
+   - @ File Reference (#20)
+   - Configuration UI (#21)
+   - SecretStorage (#22)
 
 2. **中優先級** (提升可用性)
-   - SecretStorage
-   - Markdown 渲染
-   - 錯誤處理優化
+   - Chat UI Enhancements (#23)
+   - Performance Optimization (#24)
+   - Testing & Documentation (#25)
 
 3. **低優先級** (v3.0 進階功能)
    - MCP 支援
@@ -152,7 +208,8 @@
 | 版本 | 預計完成時間 | 主要目標 |
 |------|-------------|---------|
 | v1.0 | ✅ 已完成 | 基礎聊天功能 |
-| v2.0 | TBD | 程式碼編輯整合 |
+| v2.0 | ✅ 已完成 | 程式碼編輯整合 |
+| v2.5 | TBD | 使用者體驗與效能提升 |
 | v3.0 | TBD | 智慧 Agent 系統 |
 
 ---
