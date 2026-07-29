@@ -1,0 +1,19 @@
+model_list:
+  # Primary: Groq (Llama-3.3-70b) - Fast and free tier
+  - model_name: groq-llama-3.3-70b
+    litellm_params:
+      model: groq/llama-3.3-70b-versatile
+      api_key: os.environ/GROQ_API_KEY
+
+  # Fallback: OpenRouter (Qwen-2.5-Coder)
+  - model_name: openrouter-qwen-2.5-coder
+    litellm_params:
+      model: openrouter/qwen/qwen-2.5-coder-32b-instruct
+      api_key: os.environ/OPENROUTER_API_KEY
+
+router_settings:
+  routing_strategy: simple_shuffle
+  fallbacks: [
+    { "groq-llama-3.3-70b": ["openrouter-qwen-2.5-coder"] }
+  ]
+  set_verbose: true
