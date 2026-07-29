@@ -2,23 +2,68 @@
   "name": "vscode-ai-extension",
   "displayName": "AI Assistant with LiteLLM",
   "description": "VSCode AI Extension using LiteLLM Proxy with automatic fallback",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "publisher": "your-publisher-name",
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": [
+    "Machine Learning",
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onView:ai-assistant.chatPanel"
+  ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ai-assistant",
+          "title": "AI Assistant",
+          "icon": "$(comment-discussion)"
+        }
+      ]
+    },
+    "views": {
+      "ai-assistant": [
+        {
+          "type": "webview",
+          "id": "ai-assistant.chatPanel",
+          "name": "Chat",
+          "icon": "$(comment-discussion)",
+          "contextualTitle": "AI Assistant"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "ai-assistant.askAI",
-        "title": "Ask AI: 向 AI 提問"
+        "title": "Ask AI: 向 AI 提問",
+        "category": "AI Assistant"
+      },
+      {
+        "command": "ai-assistant.focusChatPanel",
+        "title": "Focus Chat Panel",
+        "category": "AI Assistant",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "ai-assistant.checkHealth",
+        "title": "Check LiteLLM Health",
+        "category": "AI Assistant",
+        "icon": "$(debug-start)"
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "ai-assistant.checkHealth",
+          "when": "view == ai-assistant.chatPanel",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -26,12 +71,9 @@
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts"
   },
-  "dependencies": {
-    "node-fetch": "^2.7.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^18.0.0",
-    "@types/node-fetch": "^2.6.9",
     "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",

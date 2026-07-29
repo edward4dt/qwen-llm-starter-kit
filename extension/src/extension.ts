@@ -1,14 +1,24 @@
 import * as vscode from 'vscode';
-import fetch from 'node-fetch';
-
-const LITELLM_PROXY_URL = 'http://localhost:4000/chat/completions';
-const LITELLM_MASTER_KEY = 'sk-my-vscode-extension';
+import { ChatPanelProvider } from './providers/chatPanel';
+import { LiteLLMClient } from './utils/litellm-client';
+import { ChatMessage } from './types';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('AI Assistant Extension is now active!');
 
-    const disposable = vscode.commands.registerCommand('ai-assistant.askAI', async () => {
-        // Get the selected text or ask for input
+    // Initialize LiteLLM Client
+    const client = new LiteLLMClient();
+
+    // Register Chat Panel Provider (Sidebar)
+    const chatPanelProvider = new ChatPanelProvider(context.extensionUri, context);
+    const chatPanelDisposable = vscode.window.registerWebviewViewProvider(
+        ChatPanelProvider.viewType,
+        chatPanelProvider
+    );
+    context.subscriptions.push(chatPanelDisposable);
+
+    // Command: Ask AI (Legacy - for backward compatibility)
+    const askAICommand = vscode.commands.registerCommand('ai-assistant.askAI', async () => {
         const editor = vscode.window.activeTextEditor;
         let selectedText = '';
         
@@ -17,7 +27,6 @@ export function activate(context: vscode.ExtensionContext) {
             selectedText = editor.document.getText(selection);
         }
 
-        // Ask user for their question
         const question = await vscode.window.showInputBox({
             prompt: '請輸入您的問題',
             placeHolder: '例如：解釋這段程式碼的功能...',
@@ -28,7 +37,6 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        // Show progress indicator
         await vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
@@ -37,37 +45,25 @@ export function activate(context: vscode.ExtensionContext) {
             },
             async (progress) => {
                 try {
-                    const response = await fetch(LITELLM_PROXY_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${LITELLM_MASTER_KEY}`
-                        },
-                        body: JSON.stringify({
-                            model: 'groq-llama-3.3-70b',
-                            messages: [
-                                {
-                                    role: 'system',
-                                    content: '你是一個專業的程式開發助手，擅長解答程式相關問題。請用繁體中文回答。'
-                                },
-                                {
-                                    role: 'user',
-                                    content: question
-                                }
-                            ],
-                            max_tokens: 2000,
-                            temperature: 0.7
-                        })
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`API 回應錯誤：${response.status} ${response.statusText}`);
+                    // Check health first
+                    const isHealthy = await client.healthCheck();
+                    if (!isHealthy) {
+                        throw new Error('LiteLLM Proxy 未啟動或無法連接。請確認 Docker 容器是否運行中。');
                     }
 
-                    const data = await response.json();
-                    const aiResponse = data.choices?.[0]?.message?.content || '沒有收到 AI 的回覆';
+                    const messages: ChatMessage[] = [
+                        {
+                            role: 'system',
+                            content: '你是一個專業的程式開發助手，擅長解答程式相關問題。請用繁體中文回答。'
+                        },
+                        {
+                            role: 'user',
+                            content: question
+                        }
+                    ];
 
-                    // Show the response in a new document
+                    const aiResponse = await client.chat(messages);
+
                     const doc = await vscode.workspace.openTextDocument({
                         content: aiResponse,
                         language: 'markdown'
@@ -84,7 +80,24 @@ export function activate(context: vscode.ExtensionContext) {
         );
     });
 
-    context.subscriptions.push(disposable);
+    // Command: Focus Chat Panel
+    const focusChatCommand = vscode.commands.registerCommand('ai-assistant.focusChatPanel', () => {
+        vscode.commands.executeCommand('workbench.view.extension.ai-assistant');
+    });
+
+    // Command: Check LiteLLM Health
+    const healthCheckCommand = vscode.commands.registerCommand('ai-assistant.checkHealth', async () => {
+        const isHealthy = await client.healthCheck();
+        if (isHealthy) {
+            vscode.window.showInformationMessage('✅ LiteLLM Proxy 運行正常！');
+        } else {
+            vscode.window.showErrorMessage('❌ LiteLLM Proxy 無法連接。請確認 Docker 容器是否運行在 http://localhost:4000');
+        }
+    });
+
+    context.subscriptions.push(askAICommand);
+    context.subscriptions.push(focusChatCommand);
+    context.subscriptions.push(healthCheckCommand);
 }
 
 export function deactivate() {
