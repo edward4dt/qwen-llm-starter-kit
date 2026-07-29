@@ -12,9 +12,10 @@
     "Other"
   ],
   "activationEvents": [
+    "onView:ai-assistant.chatPanel",
     "onCommand:ai-assistant.askAI",
-    "onStartupFinished"
-  ],
+    "onCommand:ai-assistant.checkHealth"
+],
   "main": "./out/extension.js",
   "files": [
     "out",
