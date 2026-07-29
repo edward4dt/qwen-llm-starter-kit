@@ -68,6 +68,22 @@
         "title": "Check LiteLLM Health",
         "category": "AI Assistant",
         "icon": "$(debug-start)"
+      },
+      {
+        "command": "ai-assistant.inlineEdit",
+        "title": "Inline Edit: AI 程式碼編輯",
+        "category": "AI Assistant",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "ai-assistant.acceptEdit",
+        "title": "Accept AI Edit",
+        "category": "AI Assistant"
+      },
+      {
+        "command": "ai-assistant.rejectEdit",
+        "title": "Reject AI Edit",
+        "category": "AI Assistant"
       }
     ],
     "menus": {
@@ -76,6 +92,13 @@
           "command": "ai-assistant.checkHealth",
           "when": "view == ai-assistant.chatPanel",
           "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "ai-assistant.inlineEdit",
+          "when": "editorHasSelection",
+          "group": "ai-assistant"
         }
       ]
     }
