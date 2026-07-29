@@ -2,6 +2,7 @@ export interface FileReference {
     filePath: string;
     content: string;
     language?: string;
+    isDirectory?: boolean;
 }
 
 export interface ChatMessageContext {

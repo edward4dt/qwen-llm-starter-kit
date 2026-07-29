@@ -275,6 +275,43 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
             border-radius: 4px;
             margin-bottom: 8px;
         }
+
+        /* File/Directory reference styles */
+        .message .file-ref-header {
+            background-color: var(--vscode-editorBracketMatch-background);
+            color: var(--vscode-editorBracketMatch-border);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+            font-family: var(--vscode-editor-font-family);
+            display: inline-block;
+            margin: 2px 0;
+        }
+
+        .message .file-ref-content {
+            background-color: var(--vscode-editor-background);
+            border-left: 3px solid var(--vscode-editorIndentGuide-background);
+            padding: 4px 8px;
+            margin: 4px 0;
+            border-radius: 0 3px 3px 0;
+            font-family: var(--vscode-editor-font-family);
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        .message .directory-ref {
+            border-left: 3px solid var(--vscode-editorWarning-foreground);
+            padding: 4px 8px;
+            margin: 4px 0;
+            background-color: rgba(180, 180, 0, 0.1);
+        }
+
+        .message .question-label {
+            color: var(--vscode-descriptionForeground);
+            font-weight: bold;
+            margin-top: 8px;
+            display: block;
+        }
     </style>
 </head>
 <body>
