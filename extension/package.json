@@ -12,9 +12,16 @@
     "Other"
   ],
   "activationEvents": [
-    "onView:ai-assistant.chatPanel"
+    "onCommand:ai-assistant.askAI",
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/edward4dt/qwen-llm-starter-kit.git"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/edward4dt/qwen-llm-starter-kit",
   "contributes": {
     "viewsContainers": {
       "activitybar": [
