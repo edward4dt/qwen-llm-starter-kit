@@ -2,7 +2,7 @@
   "name": "vscode-ai-extension",
   "displayName": "AI Assistant with LiteLLM",
   "description": "VSCode AI Extension using LiteLLM Proxy with automatic fallback",
-  "version": "0.1.0",
+  "version": "2.6.0",
   "publisher": "edward4dt",
   "engines": {
     "vscode": "^1.85.0"
