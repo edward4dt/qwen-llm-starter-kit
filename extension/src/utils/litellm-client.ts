@@ -8,7 +8,7 @@ export class LiteLLMClient {
     constructor(baseUrl: string = 'http://localhost:4000', apiKey: string = 'sk-my-vscode-extension') {
         this.baseUrl = baseUrl;
         this.apiKey = apiKey;
-        this.defaultModel = 'groq-llama-3.3-70b';
+        this.defaultModel = 'coding';
     }
 
     async chat(messages: ChatMessage[], options?: {
