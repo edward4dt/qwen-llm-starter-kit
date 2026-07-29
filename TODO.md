@@ -64,7 +64,7 @@
 - [x] `@` 觸發的文件選擇器
 - [x] 檔案內容註入到上下文
 - [x] ChatMessage 類型擴充支援 context.references
-- [ ] `@` 自動補全功能
+- [x] `@` 自動補全功能
 - [x] 檔案大小限制 (< 10KB)
 - [ ] LiteLLM Proxy 自訂上下文驗證
 - [x] 本地功能測試
