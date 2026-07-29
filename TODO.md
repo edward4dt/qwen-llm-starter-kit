@@ -67,7 +67,7 @@
 - [ ] `@` 自動補全功能
 - [x] 檔案大小限制 (< 10KB)
 - [ ] LiteLLM Proxy 自訂上下文驗證
-- [ ] 本地功能測試
+- [x] 本地功能測試
 - [ ] LiteLLM 日誌驗證
 
 ### @ Directory Reference (#26)
