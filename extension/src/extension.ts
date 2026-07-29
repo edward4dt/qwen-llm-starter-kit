@@ -4,6 +4,7 @@ import { LiteLLMClient } from './utils/litellm-client';
 import { ChatMessage } from './types';
 import { InlineEditProvider } from './providers/inlineEdit';
 import { PromptTemplateProvider } from './providers/promptTemplate';
+import { FileReferenceProvider } from './utils/file-reference';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('AI Assistant Extension is now active!');
@@ -107,9 +108,25 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
+    // Command: Select Directory Reference
+    const selectDirectoryCommand = vscode.commands.registerCommand('ai-assistant.selectDirectory', async () => {
+        try {
+            const fileRefProvider = new FileReferenceProvider();
+            const fileRefs = await fileRefProvider.showDirectoryPicker();
+            
+            if (fileRefs && fileRefs.length > 0) {
+                vscode.window.showInformationMessage(`已選擇 ${fileRefs.length} 個檔案作為參考`);
+            }
+        } catch (error) {
+            console.error('Error selecting directory:', error);
+            vscode.window.showErrorMessage(`選擇目錄失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
+        }
+    });
+
     context.subscriptions.push(askAICommand);
     context.subscriptions.push(focusChatCommand);
     context.subscriptions.push(healthCheckCommand);
+    context.subscriptions.push(selectDirectoryCommand);
 }
 
 export function deactivate() {
