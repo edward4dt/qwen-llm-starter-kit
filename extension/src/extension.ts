@@ -5,6 +5,7 @@ import { ChatMessage } from './types';
 import { InlineEditProvider } from './providers/inlineEdit';
 import { PromptTemplateProvider } from './providers/promptTemplate';
 import { FileReferenceProvider } from './utils/file-reference';
+import { AtCompletionProvider } from './providers/atCompletion';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('AI Assistant Extension is now active!');
@@ -121,6 +122,20 @@ export function activate(context: vscode.ExtensionContext) {
             console.error('Error selecting directory:', error);
             vscode.window.showErrorMessage(`選擇目錄失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
         }
+    });
+
+    // Register @ Completion Provider
+    const atCompletionProvider = new AtCompletionProvider();
+    const completionProviderDisposable = vscode.languages.registerCompletionItemProvider(
+        '*', // Apply to all languages
+        atCompletionProvider,
+        '@' // Trigger character
+    );
+    context.subscriptions.push(completionProviderDisposable);
+
+    // Clear cache when workspace changes
+    vscode.workspace.onDidChangeWorkspaceFolders(() => {
+        atCompletionProvider.clearCache();
     });
 
     context.subscriptions.push(askAICommand);
