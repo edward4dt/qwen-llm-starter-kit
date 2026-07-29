@@ -1,4 +1,4 @@
-import { ChatCompletionRequest, ChatCompletionResponse, StreamChunk, ChatMessage } from '../types';
+import { ChatCompletionRequest, ChatCompletionResponse, StreamChunk, ChatMessage, WorkMode } from '../types';
 
 export class LiteLLMClient {
     private baseUrl: string;
@@ -8,19 +8,26 @@ export class LiteLLMClient {
     constructor(baseUrl: string = 'http://127.0.0.1:4000', apiKey: string = 'sk-my-vscode-extension') {
         this.baseUrl = baseUrl;
         this.apiKey = apiKey;
-        this.defaultModel = 'coding';
+        this.defaultModel = 'coder'; // Changed from 'coding' to 'coder' for v2.8 model router
     }
 
     async chat(messages: ChatMessage[], options?: {
         model?: string;
         maxTokens?: number;
         temperature?: number;
+        workMode?: WorkMode;
     }): Promise<string> {
+        const workMode = options?.workMode || 'coding';
+        const model = options?.model || this.getModelForWorkMode(workMode);
+        const maxTokens = options?.maxTokens || this.getMaxTokensForWorkMode(workMode);
+        const enableThinking = workMode === 'planning';
+
         const request: ChatCompletionRequest = {
-            model: options?.model || this.defaultModel,
+            model,
             messages,
-            max_tokens: options?.maxTokens || 2000,
+            max_tokens: maxTokens,
             temperature: options?.temperature || 0.7,
+            enable_thinking: enableThinking,
         };
 
         const response = await fetch(`${this.baseUrl}/chat/completions`, {
@@ -45,13 +52,20 @@ export class LiteLLMClient {
         model?: string;
         maxTokens?: number;
         temperature?: number;
+        workMode?: WorkMode;
     }): AsyncGenerator<string> {
+        const workMode = options?.workMode || 'coding';
+        const model = options?.model || this.getModelForWorkMode(workMode);
+        const maxTokens = options?.maxTokens || this.getMaxTokensForWorkMode(workMode);
+        const enableThinking = workMode === 'planning';
+
         const request: ChatCompletionRequest = {
-            model: options?.model || this.defaultModel,
+            model,
             messages,
-            max_tokens: options?.maxTokens || 2000,
+            max_tokens: maxTokens,
             temperature: options?.temperature || 0.7,
             stream: true,
+            enable_thinking: enableThinking,
         };
 
         const response = await fetch(`${this.baseUrl}/chat/completions`, {
@@ -103,6 +117,38 @@ export class LiteLLMClient {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Get model name based on work mode
+     */
+    private getModelForWorkMode(workMode: WorkMode): string {
+        switch (workMode) {
+            case 'planning':
+                return 'planner';
+            case 'coding':
+                return 'coder';
+            case 'review':
+            case 'explain':
+                return 'reviewer';
+            default:
+                return 'coder';
+        }
+    }
+
+    /**
+     * Get max tokens based on work mode
+     */
+    private getMaxTokensForWorkMode(workMode: WorkMode): number {
+        switch (workMode) {
+            case 'planning':
+                return 8192;
+            case 'coding':
+            case 'review':
+            case 'explain':
+            default:
+                return 2048;
         }
     }
 
