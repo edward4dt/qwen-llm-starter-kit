@@ -88,32 +88,36 @@
 
 ---
 
-## 🔧 v2.7 (規劃中 - 優化 @參考的 Prompt 格式)
+## ✅ v2.7 (已完成 - 優化 @參考的 Prompt 格式)
 
-### 結構化 Prompt 格式 (#27)
-- [ ] 修改 `injectFileContext` 以支援結構化格式 (`[FILE: 檔名]` + 程式碼區塊)
-- [ ] 修改 `injectDirectoryContext` 以支援結構化格式 (`[DIRECTORY: 目錄名]` + 檔案清單)
-- [ ] 在 `_handleUserMessage` 中清除臨時的 `@` 文字
-- [ ] 新增 `[QUESTION]` 標籤區隔問題與參考內容
-- [ ] 前端 CSS 樣式優化
-  - [ ] `.file-ref-header` 樣式 (檔案/目錄標題)
-  - [ ] `.file-ref-content` 樣式 (程式碼內容區塊)
-  - [ ] `.directory-ref` 樣式 (目錄參考區塊)
-  - [ ] `.question-label` 樣式 (問題標籤)
-- [ ] 實作 `parseMessageContent` 解析邏輯
-- [ ] 測試前端顯示效果
-- [ ] 驗收標準:
-  - [ ] 檔案參考以 `[FILE: 檔名]` + 程式碼區塊的格式呈現
-  - [ ] 目錄參考以 `[DIRECTORY: 目錄名]` + 檔案清單的格式呈現
-  - [ ] 使用者問題以 `[QUESTION]` 開頭，並與參考內容明顯分隔
-  - [ ] 前端聊天視窗中，參考內容有視覺化樣式 (背景色、邊框等)
-  - [ ] 原始文字中的 `@檔案路徑` 不再出現於 Prompt 中
+### 結構化 Prompt 格式 (#27, #32)
+- [x] 修改 `injectFileContext` 以支援結構化格式 (`[FILE: 檔名]` + 程式碼區塊)
+- [x] 修改 `injectDirectoryContext` 以支援結構化格式 (`[DIRECTORY: 目錄名]` + 檔案清單)
+- [x] 在 `_handleUserMessage` 中清除臨時的 `@` 文字
+- [x] 新增 `[QUESTION]` 標籤區隔問題與參考內容
+- [x] 前端 CSS 樣式優化
+  - [x] `.file-ref-header` 樣式 (檔案/目錄標題)
+  - [x] `.file-ref-content` 樣式 (程式碼內容區塊)
+  - [x] `.directory-ref` 樣式 (目錄參考區塊)
+  - [x] `.question-label` 樣式 (問題標籤)
+- [x] 實作 `parseMessageContent` 解析邏輯
+- [x] 測試前端顯示效果
+- [x] 驗收標準:
+  - [x] 檔案參考以 `[FILE: 檔名]` + 程式碼區塊的格式呈現
+  - [x] 目錄參考以 `[DIRECTORY: 目錄名]` + 檔案清單的格式呈現
+  - [x] 使用者問題以 `[QUESTION]` 開頭，並與參考內容明顯分隔
+  - [x] 前端聊天視窗中，參考內容有視覺化樣式 (背景色、邊框等)
+  - [x] 原始文字中的 `@檔案路徑` 不再出現於 Prompt 中
 
-### 技術風險管理 (#28)
-- [ ] 限制檔案內容長度 (單檔 < 50KB，總 Token < 50,000)
-- [ ] 處理特殊字元 (使用 `JSON.stringify` 或自訂轉義邏輯)
-- [ ] 使用 `path.posix` 統一路徑格式 (Windows/Linux 相容)
-- [ ] 前端效能優化 (使用 `requestAnimationFrame` 或分頁載入)
+### 技術風險管理 (#28, #33)
+- [x] 限制檔案內容長度 (單檔 < 50KB，總 Token < 50,000)
+- [x] 處理特殊字元 (使用 `JSON.stringify` 或自訂轉義邏輯)
+- [x] 使用 `path.posix` 統一路徑格式 (Windows/Linux 相容)
+- [x] 前端效能優化 (使用 `requestAnimationFrame` 或分頁載入)
+
+**Release**: v2.7.0 (2026-07-29)
+**PR**: #34
+**Issues**: #32, #33 (已關閉)
 
 ---
 
@@ -270,6 +274,7 @@
 | v2.0 | ✅ 已完成 | 程式碼編輯整合 |
 | v2.5 | ✅ 已完成 | 使用者體驗與效能提升 |
 | v2.6 | ✅ 已完成 | @ 自動補全功能 |
+| v2.7 | ✅ 已完成 | 優化 @參考的 Prompt 格式 |
 | v3.0 | TBD | 智慧 Agent 系統 |
 
 ---
