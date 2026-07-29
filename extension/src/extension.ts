@@ -2,12 +2,18 @@ import * as vscode from 'vscode';
 import { ChatPanelProvider } from './providers/chatPanel';
 import { LiteLLMClient } from './utils/litellm-client';
 import { ChatMessage } from './types';
+import { InlineEditProvider } from './providers/inlineEdit';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('AI Assistant Extension is now active!');
 
     // Initialize LiteLLM Client
     const client = new LiteLLMClient();
+
+    // Initialize Inline Edit Provider
+    const inlineEditProvider = new InlineEditProvider();
+    const inlineEditCommands = inlineEditProvider.registerCommands();
+    context.subscriptions.push(...inlineEditCommands);
 
     // Register Chat Panel Provider (Sidebar)
     const chatPanelProvider = new ChatPanelProvider(context.extensionUri, context);
