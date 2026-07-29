@@ -129,16 +129,16 @@
   - [x] `coder`: Groq Llama 3.3 70B (快速回應、程式生成)
   - [x] `reviewer`: Qwen Free (Code Review、說明、文件整理)
   - [x] `offline`: Ollama (離線備援)
-- [ ] 實現工作模式選擇 UI
-  - [ ] Planning 模式
-  - [ ] Coding 模式
-  - [ ] Review 模式
-  - [ ] Explain 模式
+- [x] 實現工作模式選擇 UI
+  - [x] Planning 模式
+  - [x] Coding 模式
+  - [x] Review 模式
+  - [x] Explain 模式
 - [x] 不同模式對應不同模型與參數
   - [x] Planning: Mistral, enable_thinking=true, max_tokens=8192
   - [x] Coding: Groq Llama 3.3, enable_thinking=false, max_tokens=2048
-  - [ ] Review: Groq Llama 3.3, enable_thinking=false, max_tokens=4096
-  - [ ] Explain: Qwen Free, enable_thinking=false, max_tokens=2048
+  - [x] Review: Groq Llama 3.3, enable_thinking=false, max_tokens=4096
+  - [x] Explain: Qwen Free, enable_thinking=false, max_tokens=2048
 
 ### LiteLLM 配置更新
 - [x] 更新 litellm.yaml 支持多 model groups
@@ -146,7 +146,7 @@
   - [x] planner → coder → reviewer → offline
 - [x] 指定 OpenRouter 免費 Provider
   - [x] qwen/qwen3-coder:free
-  - [ ] deepseek/deepseek-r1:free
+  - [x] deepseek/deepseek-r1:free
 - [x] 動態 max_tokens 設定
   - [x] 避免預設 32000 tokens 導致 402 錯誤
   - [x] 根據工作類型設定合適的 token 限制
@@ -159,11 +159,11 @@
 ### 錯誤處理優化
 - [x] 處理 `enable_thinking is unsupported` 錯誤
 - [x] 處理 OpenRouter 402 Payment Required 錯誤
-- [ ] 提供更明確的錯誤訊息與建議
+- [x] 提供更明確的錯誤訊息與建議
 
-**Release**: v2.8.0 (TBD)
+**Release**: v2.8.0 (2026-07-29)
 **PR**: #36
-**Issues**: #35
+**Issues**: #35 (已關閉)
 
 ---
 
@@ -321,7 +321,7 @@
 | v2.5 | ✅ 已完成 | 使用者體驗與效能提升 |
 | v2.6 | ✅ 已完成 | @ 自動補全功能 |
 | v2.7 | ✅ 已完成 | 優化 @參考的 Prompt 格式 |
-| v2.8 | TBD | 模型路由器重構 (多階段路由、Thinking 控制) |
+| v2.8 | ✅ 已完成 | 模型路由器重構 (多階段路由、Thinking 控制) |
 | v3.0 | TBD | 智慧 Agent 系統 |
 
 ---
