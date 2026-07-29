@@ -47,6 +47,9 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
                 case 'triggerFilePicker':
                     await this._handleFilePickerTrigger();
                     break;
+                case 'triggerDirectoryPicker':
+                    await this._handleDirectoryPickerTrigger();
+                    break;
             }
         });
     }
@@ -66,6 +69,25 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
             this._view?.webview.postMessage({ 
                 type: 'error', 
                 error: `選擇檔案時發生錯誤：${error instanceof Error ? error.message : '未知錯誤'}` 
+            });
+        }
+    }
+
+    private async _handleDirectoryPickerTrigger(): Promise<void> {
+        try {
+            const fileRefs = await this._fileRefProvider.showDirectoryPicker();
+            if (fileRefs.length > 0) {
+                this._pendingFileRefs.push(...fileRefs);
+                this._view?.webview.postMessage({ 
+                    type: 'fileRefSelected', 
+                    files: fileRefs.map(f => ({ path: f.filePath, language: f.language }))
+                });
+            }
+        } catch (error) {
+            console.error('Error selecting directory:', error);
+            this._view?.webview.postMessage({ 
+                type: 'error', 
+                error: `選擇目錄時發生錯誤：${error instanceof Error ? error.message : '未知錯誤'}` 
             });
         }
     }
@@ -260,7 +282,8 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
     <div class="input-container">
         <div class="input-row">
             <button id="fileRefBtn" class="file-ref-btn" title="附加檔案參考">@</button>
-            <input type="text" id="messageInput" placeholder="輸入問題... (使用 @ 選擇檔案)" />
+            <button id="directoryRefBtn" class="file-ref-btn" title="附加目錄參考 (Ctrl+Shift+D)">📁</button>
+            <input type="text" id="messageInput" placeholder="輸入問題... (使用 @ 選擇檔案/目錄)" />
             <button id="sendBtn">發送</button>
             <button id="clearBtn">清除</button>
         </div>
@@ -274,6 +297,7 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
         const sendBtn = document.getElementById('sendBtn');
         const clearBtn = document.getElementById('clearBtn');
         const fileRefBtn = document.getElementById('fileRefBtn');
+        const directoryRefBtn = document.getElementById('directoryRefBtn');
         const fileRefsDisplay = document.getElementById('fileRefsDisplay');
         
         let pendingFileRefs = [];
@@ -338,6 +362,10 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
         
         fileRefBtn.addEventListener('click', () => {
             vscode.postMessage({ type: 'triggerFilePicker' });
+        });
+        
+        directoryRefBtn.addEventListener('click', () => {
+            vscode.postMessage({ type: 'triggerDirectoryPicker' });
         });
         
         clearBtn.addEventListener('click', () => {

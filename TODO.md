@@ -70,6 +70,22 @@
 - [ ] 本地功能測試
 - [ ] LiteLLM 日誌驗證
 
+### @ Directory Reference (#26)
+- [x] 新增 `getAllFilesInDirectory` 遞迴讀取函數
+- [x] 新增 `isValidFile` 檔案過濾邏輯 (排除 node_modules, .git, 二進位檔等)
+- [x] 新增 `triggerDirectorySelection` 目錄選擇器 (使用 vscode.window.showOpenDialog)
+- [x] 新增 `injectDirectoryContext` 批次註入邏輯 (含 Token 限制)
+- [x] 修改 `@` 觸發邏輯以支援目錄選擇 (提供「選擇檔案」/「選擇目錄」選項)
+- [x] 修改消息送出邏輯以包含目錄上下文
+- [x] 新增進度提示 (vscode.window.withProgress)
+- [x] 新增檔案預覽確認對話框
+- [x] 新增快捷鍵 (Ctrl+Shift+D / Cmd+Shift+D)
+- [x] 擴充 ChatMessage.context.references 以支援多檔案
+- [x] 實作檔案數量上限 (預設 10 個)
+- [x] 實作單一檔案大小上限 (預設 50KB)
+- [x] 實作總 Token 數上限 (預設 50,000)
+- [ ] 單位測試與整合測試
+
 ### Configuration UI (#21)
 - [ ] package.json configuration schema 定義
 - [ ] 遷移 .env 設定到 VSCode settings
@@ -149,6 +165,15 @@
 
 ## 📝 其他改進項目
 
+### 目錄選擇功能 (#26)
+- [ ] 使用 VSCode Configuration API 新增設定選項
+  - [ ] aiAssistant.maxFiles (最大檔案數量，預設 10)
+  - [ ] aiAssistant.maxFileSize (單一檔案最大大小 KB，預設 50)
+  - [ ] aiAssistant.excludedDirs (排除目錄清單，預設 ["node_modules", ".git", "dist"])
+  - [ ] aiAssistant.maxTotalTokens (總 Token 數上限，預設 50000)
+- [ ] 在 package.json contributes.configuration 中定義設定 schema
+- [ ] 更新 README 說明文件
+
 ### 設定頁面
 - [ ] 使用 VSCode Configuration API
 - [ ] 可設定的選項
@@ -188,6 +213,7 @@
 
 1. **高優先級** (v2.5 核心功能)
    - @ File Reference (#20)
+   - @ Directory Reference (#26) - 新增功能
    - Configuration UI (#21)
    - SecretStorage (#22)
 

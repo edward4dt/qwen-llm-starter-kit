@@ -70,6 +70,12 @@
         "icon": "$(debug-start)"
       },
       {
+        "command": "ai-assistant.selectDirectory",
+        "title": "Select Directory Reference: 選擇目錄作為上下文",
+        "category": "AI Assistant",
+        "icon": "$(folder-opened)"
+      },
+      {
         "command": "ai-assistant.inlineEdit",
         "title": "Inline Edit: AI 程式碼編輯",
         "category": "AI Assistant",
@@ -122,7 +128,15 @@
           "group": "ai-assistant"
         }
       ]
-    }
+    },
+    "keybindings": [
+      {
+        "command": "ai-assistant.selectDirectory",
+        "key": "ctrl+shift+d",
+        "mac": "cmd+shift+d",
+        "when": "editorTextFocus"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
