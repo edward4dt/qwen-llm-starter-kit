@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { PromptTemplateManager } from '../utils/prompt-templates';
 import { LiteLLMClient } from '../utils/litellm-client';
+import { ConfigManager } from '../utils/configManager';
 
 export class PromptTemplateProvider {
     private _templateManager: PromptTemplateManager;
@@ -9,7 +10,7 @@ export class PromptTemplateProvider {
 
     constructor() {
         this._templateManager = new PromptTemplateManager();
-        this._client = new LiteLLMClient();
+        this._client = new LiteLLMClient(new ConfigManager(), {} as vscode.SecretStorage);
     }
 
     public registerCommands(): vscode.Disposable[] {

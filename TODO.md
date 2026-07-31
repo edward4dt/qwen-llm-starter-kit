@@ -217,6 +217,51 @@
 
 ---
 
+## 🚀 v2.9 (進行中 - Context 引用系統重構)
+
+根據使用者體驗反饋，目前 `@` 自動補全、資料夾按鈕、檔案注入等功能分散，造成 UI 混亂。本版本將重構 Context 系統為統一核心模組。
+
+### 核心架構重構 (#38)
+- [ ] 建立 `ContextManager` 核心模組
+  - [ ] 定義 `ContextReference` 介面 (type, path, content, token)
+  - [ ] 统一管理 File/Folder/Selection/Symbol Reference
+  - [ ] Token Budget 計算與限制
+- [ ] 重構 Prompt Builder
+  - [ ] 從解析 `@` 字串改為使用 `references` 陣列
+  - [ ] 支援結構化 Prompt 格式
+- [ ] 統一所有 Context 入口
+  - [ ] `@` Completion Provider
+  - [ ] QuickPick Reference Picker
+  - [ ] Drag & Drop
+  - [ ] Folder Picker (移除獨立的資料夾按鈕)
+
+### UI/UX 優化 (#39)
+- [ ] 合併 Folder Button + `@` (只保留一個入口)
+- [ ] `@` 同時支援 File / Folder (使用 VSCode CompletionItemKind)
+- [ ] 實作 Context Bubble UI (類似 Cursor)
+  - [ ] 顯示檔案/資料夾名稱與統計資訊
+  - [ ] 不依賴解析 `@` 字串
+- [ ] 實作 QuickPick Reference Picker
+  - [ ] Fuzzy Search 支援
+  - [ ] 即時預覽功能
+
+### Completion Provider 優化 (#40)
+- [ ] 移除自訂 `scanDirectories()` (改用 `workspace.findFiles()`)
+- [ ] 使用 `RelativePattern` 與 `FileSystemWatcher`
+- [ ] Directory 不 cache，從 file path 動態組裝
+- [ ] 減少 200 行 scanDirectories() 代碼
+
+### Token 預估功能 (#41)
+- [ ] 即時顯示目前 Context 大小
+- [ ] Token 限制警告
+- [ ] 視覺化 Token 使用量
+
+**預計 Release**: v2.9.0 (TBD)
+**PR**: TBD
+**Issues**: #38, #39, #40, #41
+
+---
+
 ## 🔮 v3.0 (未來規劃 - 高階功能)
 
 ### OpenHands 整合

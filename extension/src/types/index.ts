@@ -5,6 +5,35 @@ export interface FileReference {
     isDirectory?: boolean;
 }
 
+/**
+ * Context reference types
+ */
+export type ContextReferenceType = 'file' | 'folder' | 'selection' | 'symbol';
+
+/**
+ * Unified context reference interface for all context types
+ */
+export interface ContextReference {
+    type: ContextReferenceType;
+    path?: string;        // For file/folder references
+    content: string;      // The actual content
+    language?: string;    // Language identifier for syntax highlighting
+    tokenCount?: number;  // Estimated token count
+    metadata?: {          // Additional metadata based on type
+        // For selection references
+        startLine?: number;
+        endLine?: number;
+        uri?: string;
+        
+        // For symbol references
+        symbolName?: string;
+        symbolKind?: string;
+        
+        // For folder references
+        fileCount?: number;
+    };
+}
+
 export interface ChatMessageContext {
     references?: FileReference[];
 }

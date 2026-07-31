@@ -1,13 +1,14 @@
 import * as vscode from 'vscode';
 import { LiteLLMClient } from '../utils/litellm-client';
 import { ChatMessage } from '../types';
+import { ConfigManager } from '../utils/configManager';
 
 export class InlineEditProvider {
     private _client: LiteLLMClient;
     private _disposables: vscode.Disposable[] = [];
 
     constructor() {
-        this._client = new LiteLLMClient();
+        this._client = new LiteLLMClient(new ConfigManager(), {} as vscode.SecretStorage);
     }
 
     public registerCommands(): vscode.Disposable[] {

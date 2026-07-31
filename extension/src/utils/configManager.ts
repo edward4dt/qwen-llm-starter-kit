@@ -32,7 +32,7 @@ export class ConfigManager {
      * Get Master Key from SecretStorage
      */
     async getMasterKey(secretStorage: vscode.SecretStorage): Promise<string | undefined> {
-        const storedKey = await secretStorage.get(this.MASTER_KEY_SECRET_KEY);
+        const storedKey = await secretStorage.get(ConfigManager.MASTER_KEY_SECRET_KEY);
         
         // If key is in SecretStorage, return it
         if (storedKey) {
@@ -53,14 +53,14 @@ export class ConfigManager {
      * Set Master Key in SecretStorage
      */
     async setMasterKey(secretStorage: vscode.SecretStorage, key: string): Promise<void> {
-        await secretStorage.store(this.MASTER_KEY_SECRET_KEY, key);
+        await secretStorage.store(ConfigManager.MASTER_KEY_SECRET_KEY, key);
     }
 
     /**
      * Remove Master Key from SecretStorage
      */
     async removeMasterKey(secretStorage: vscode.SecretStorage): Promise<void> {
-        await secretStorage.delete(this.MASTER_KEY_SECRET_KEY);
+        await secretStorage.delete(ConfigManager.MASTER_KEY_SECRET_KEY);
     }
 
     /**
