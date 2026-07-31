@@ -6,12 +6,16 @@ import { InlineEditProvider } from './providers/inlineEdit';
 import { PromptTemplateProvider } from './providers/promptTemplate';
 import { FileReferenceProvider } from './utils/file-reference';
 import { AtCompletionProvider } from './providers/atCompletion';
+import { ConfigManager } from './utils/configManager';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('AI Assistant Extension is now active!');
 
-    // Initialize LiteLLM Client
-    const client = new LiteLLMClient();
+    // Initialize ConfigManager
+    const configManager = new ConfigManager();
+
+    // Initialize LiteLLM Client with ConfigManager and SecretStorage
+    const client = new LiteLLMClient(configManager, context.secrets);
 
     // Initialize Inline Edit Provider
     const inlineEditProvider = new InlineEditProvider();
@@ -24,12 +28,27 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(...promptTemplateCommands);
 
     // Register Chat Panel Provider (Sidebar)
-    const chatPanelProvider = new ChatPanelProvider(context.extensionUri, context);
+    const chatPanelProvider = new ChatPanelProvider(context.extensionUri, context, configManager, client);
     const chatPanelDisposable = vscode.window.registerWebviewViewProvider(
         ChatPanelProvider.viewType,
         chatPanelProvider
     );
     context.subscriptions.push(chatPanelDisposable);
+
+    // Command: Set Master Key
+    const setMasterKeyCommand = vscode.commands.registerCommand('ai-assistant.setMasterKey', async () => {
+        const masterKey = await vscode.window.showInputBox({
+            prompt: 'Enter LiteLLM Proxy Master Key',
+            placeHolder: 'sk-...',
+            password: true,
+            ignoreFocusOut: true
+        });
+
+        if (masterKey) {
+            await configManager.setMasterKey(context.secrets, masterKey);
+            vscode.window.showInformationMessage('✅ LiteLLM Master Key has been saved securely.');
+        }
+    });
 
     // Command: Ask AI (Legacy - for backward compatibility)
     const askAICommand = vscode.commands.registerCommand('ai-assistant.askAI', async () => {
@@ -60,7 +79,7 @@ export function activate(context: vscode.ExtensionContext) {
             async (progress) => {
                 try {
                     // Check health first
-                    const isHealthy = await client.healthCheck();
+                    const isHealthy = await client.healthCheck(context.secrets);
                     if (!isHealthy) {
                         throw new Error('LiteLLM Proxy 未啟動或無法連接。請確認 Docker 容器是否運行中。');
                     }
@@ -76,7 +95,7 @@ export function activate(context: vscode.ExtensionContext) {
                         }
                     ];
 
-                    const aiResponse = await client.chat(messages);
+                    const aiResponse = await client.chat(messages, undefined, context.secrets);
 
                     const doc = await vscode.workspace.openTextDocument({
                         content: aiResponse,
@@ -101,7 +120,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command: Check LiteLLM Health
     const healthCheckCommand = vscode.commands.registerCommand('ai-assistant.checkHealth', async () => {
-        const isHealthy = await client.healthCheck();
+        const isHealthy = await client.healthCheck(context.secrets);
         if (isHealthy) {
             vscode.window.showInformationMessage('✅ LiteLLM Proxy 運行正常！');
         } else {
@@ -138,10 +157,19 @@ export function activate(context: vscode.ExtensionContext) {
         atCompletionProvider.clearCache();
     });
 
+    // Listen for configuration changes
+    vscode.workspace.onDidChangeConfiguration((e) => {
+        if (e.affectsConfiguration('aiAssistant')) {
+            client.refreshConfig();
+            vscode.window.showInformationMessage('AI Assistant configuration updated.');
+        }
+    });
+
     context.subscriptions.push(askAICommand);
     context.subscriptions.push(focusChatCommand);
     context.subscriptions.push(healthCheckCommand);
     context.subscriptions.push(selectDirectoryCommand);
+    context.subscriptions.push(setMasterKeyCommand);
 }
 
 export function deactivate() {

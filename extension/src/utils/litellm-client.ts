@@ -1,14 +1,45 @@
 import { ChatCompletionRequest, ChatCompletionResponse, StreamChunk, ChatMessage, WorkMode } from '../types';
+import { ConfigManager } from './configManager';
+import * as vscode from 'vscode';
 
 export class LiteLLMClient {
     private baseUrl: string;
-    private apiKey: string;
+    private apiKey?: string;
     private defaultModel: string;
+    private configManager: ConfigManager;
 
-    constructor(baseUrl: string = 'http://127.0.0.1:4000', apiKey: string = 'sk-my-vscode-extension') {
-        this.baseUrl = baseUrl;
-        this.apiKey = apiKey;
-        this.defaultModel = 'coder'; // Changed from 'coding' to 'coder' for v2.8 model router
+    constructor(
+        configManager: ConfigManager,
+        secretStorage: vscode.SecretStorage
+    ) {
+        this.configManager = configManager;
+        const config = configManager.getConfig();
+        this.baseUrl = config.proxyUrl;
+        this.defaultModel = config.defaultModel;
+        this.apiKey = undefined; // Will be loaded lazily
+    }
+
+    /**
+     * Get API key lazily
+     */
+    private async getApiKey(secretStorage: vscode.SecretStorage): Promise<string> {
+        if (!this.apiKey) {
+            const key = await this.configManager.getMasterKey(secretStorage);
+            if (!key) {
+                throw new Error('LiteLLM Master Key is not configured. Please use "AI Assistant: Set LiteLLM Master Key" command to set it.');
+            }
+            this.apiKey = key;
+        }
+        return this.apiKey;
+    }
+
+    /**
+     * Refresh configuration (call when settings change)
+     */
+    refreshConfig() {
+        const config = this.configManager.getConfig();
+        this.baseUrl = config.proxyUrl;
+        this.defaultModel = config.defaultModel;
     }
 
     async chat(messages: ChatMessage[], options?: {
@@ -16,7 +47,8 @@ export class LiteLLMClient {
         maxTokens?: number;
         temperature?: number;
         workMode?: WorkMode;
-    }): Promise<string> {
+    }, secretStorage?: vscode.SecretStorage): Promise<string> {
+        const apiKey = await this.getApiKey(secretStorage!);
         const workMode = options?.workMode || 'coding';
         const model = options?.model || this.getModelForWorkMode(workMode);
         const maxTokens = options?.maxTokens || this.getMaxTokensForWorkMode(workMode);
@@ -34,7 +66,7 @@ export class LiteLLMClient {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${this.apiKey}`,
+                'Authorization': `Bearer ${apiKey}`,
             },
             body: JSON.stringify(request),
         });
@@ -53,7 +85,8 @@ export class LiteLLMClient {
         maxTokens?: number;
         temperature?: number;
         workMode?: WorkMode;
-    }): AsyncGenerator<string> {
+    }, secretStorage?: vscode.SecretStorage): AsyncGenerator<string> {
+        const apiKey = await this.getApiKey(secretStorage!);
         const workMode = options?.workMode || 'coding';
         const model = options?.model || this.getModelForWorkMode(workMode);
         const maxTokens = options?.maxTokens || this.getMaxTokensForWorkMode(workMode);
@@ -72,7 +105,7 @@ export class LiteLLMClient {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${this.apiKey}`,
+                'Authorization': `Bearer ${apiKey}`,
             },
             body: JSON.stringify(request),
         });
@@ -152,11 +185,12 @@ export class LiteLLMClient {
         }
     }
 
-    async healthCheck(): Promise<boolean> {
+    async healthCheck(secretStorage?: vscode.SecretStorage): Promise<boolean> {
         try {
+            const apiKey = secretStorage ? await this.getApiKey(secretStorage) : (this.apiKey || 'sk-my-vscode-extension');
             const response = await fetch(`${this.baseUrl}/health`, {
                 headers: {
-                    'Authorization': `Bearer ${this.apiKey}`
+                    'Authorization': `Bearer ${apiKey}`
                 }
             });
             console.log("Health check status:", response.status);
