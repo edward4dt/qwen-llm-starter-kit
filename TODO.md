@@ -167,25 +167,25 @@
 
 ---
 
-## 🔧 v2.5 (已完成 - 使用者體驗與效能提升)
+## ✅ v2.5 (已完成 - 使用者體驗與效能提升)
 
 ### Configuration UI (#21)
-- [ ] package.json configuration schema 定義
-- [ ] 遷移 .env 設定到 VSCode settings
-- [ ] 支援設定選項
-  - [ ] LiteLLM Proxy URL
-  - [ ] Master Key
-  - [ ] 預設模型
-  - [ ] Temperature
-  - [ ] Max Tokens
-- [ ] 設定驗證
-- [ ] 更新 README 設定說明
+- [x] package.json configuration schema 定義
+- [x] 遷移 .env 設定到 VSCode settings
+- [x] 支援設定選項
+  - [x] LiteLLM Proxy URL
+  - [x] Master Key
+  - [x] 預設模型
+  - [x] Temperature
+  - [x] Max Tokens
+- [x] 設定驗證
+- [x] 更新 README 設定說明
 
 ### SecretStorage (#22)
-- [ ] 使用 vscode.SecretStorage API 儲存 API Keys
-- [ ] 建立命令管理 Master Key (set/update/remove)
-- [ ] 現有 .env 用戶遷移邏輯
-- [ ] 缺少憑證時的錯誤處理
+- [x] 使用 vscode.SecretStorage API 儲存 API Keys
+- [x] 建立命令管理 Master Key (set/update/remove)
+- [x] 現有 .env 用戶遷移邏輯
+- [x] 缺少憑證時的錯誤處理
 
 ### Chat UI Enhancements (#23)
 - [ ] Markdown 渲染 (markdown-it/marked)
@@ -210,6 +210,10 @@
 - [ ] README 使用文件
 - [ ] TypeDoc API 文件
 - [ ] 內聯程式碼註解
+
+**Release**: v2.5.0 (2026-07-30)
+**PR**: #37
+**Issues**: #21, #22 (已關閉)
 
 ---
 
