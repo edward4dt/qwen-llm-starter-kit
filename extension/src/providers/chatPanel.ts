@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { LiteLLMClient } from '../utils/litellm-client';
 import { ChatMessage, FileReference } from '../types';
 import { FileReferenceProvider } from '../utils/file-reference';
+import { ConfigManager } from '../utils/configManager';
 
 export class ChatPanelProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'ai-assistant.chatPanel';
@@ -14,9 +15,11 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
     
     constructor(
         private readonly _extensionUri: vscode.Uri,
-        private readonly _context: vscode.ExtensionContext
+        private readonly _context: vscode.ExtensionContext,
+        private readonly _configManager: ConfigManager,
+        client: LiteLLMClient
     ) {
-        this._client = new LiteLLMClient();
+        this._client = client;
         this._fileRefProvider = new FileReferenceProvider();
     }
     
@@ -124,7 +127,7 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
         
         try {
             // Check health first
-            const isHealthy = await this._client.healthCheck();
+            const isHealthy = await this._client.healthCheck(this._context.secrets);
             if (!isHealthy) {
                 throw new Error('LiteLLM Proxy 未啟動或無法連接。請確認 Docker 容器是否運行中。');
             }
@@ -133,7 +136,7 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
             const assistantMessage: ChatMessage = { role: 'assistant', content: '' };
             this._messages.push(assistantMessage);
             
-            for await (const chunk of this._client.chatStream(this._messages)) {
+            for await (const chunk of this._client.chatStream(this._messages, undefined, this._context.secrets)) {
                 assistantMessage.content += chunk;
                 this._view?.webview.postMessage({ 
                     type: 'streamChunk', 
