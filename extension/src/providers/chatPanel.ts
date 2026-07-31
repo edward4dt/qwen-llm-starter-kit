@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
 import { LiteLLMClient } from '../utils/litellm-client';
 import { ChatMessage, FileReference, ContextReference } from '../types';
-import { ContextManager } from '../utils/contextManager';
+import { ContextManager, TokenEstimator } from '../utils/contextManager';
 import { FileReferenceProvider } from '../utils/file-reference';
 import { ConfigManager } from '../utils/configManager';
+import { QuickPickReferencePicker } from './atCompletion';
 
 export class ChatPanelProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'ai-assistant.chatPanel';
@@ -14,6 +15,7 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
     private _contextManager: ContextManager;
     private _fileRefProvider: FileReferenceProvider;
     private _pendingFileRefs: FileReference[] = [];
+    private _quickPickPicker: QuickPickReferencePicker;
     
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -24,6 +26,7 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
         this._client = client;
         this._contextManager = new ContextManager();
         this._fileRefProvider = new FileReferenceProvider();
+        this._quickPickPicker = new QuickPickReferencePicker(this._contextManager);
     }
     
     public resolveWebviewView(
@@ -56,7 +59,33 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
                 case 'triggerDirectoryPicker':
                     await this._handleDirectoryPickerTrigger();
                     break;
+                case 'triggerQuickPick':
+                    await this._handleQuickPickTrigger();
+                    break;
+                case 'getTokenCount':
+                    // Return current token count
+                    const tokenCount = this._contextManager.getTotalTokens();
+                    this._view?.webview.postMessage({ 
+                        type: 'tokenCount', 
+                        count: tokenCount 
+                    });
+                    break;
             }
+        });
+    }
+    
+    private async _handleQuickPickTrigger(): Promise<void> {
+        await this._quickPickPicker.showReferencePicker();
+        // Update UI with new references
+        this._updateTokenDisplay();
+    }
+    
+    private _updateTokenDisplay(): void {
+        const tokenCount = this._contextManager.getTotalTokens();
+        this._view?.webview.postMessage({ 
+            type: 'tokenCount', 
+            count: tokenCount,
+            maxBudget: 50000
         });
     }
     
@@ -328,6 +357,44 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
             margin-top: 8px;
             display: block;
         }
+        
+        /* Token counter styles */
+        .token-counter {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 8px;
+            margin-top: 8px;
+            background-color: var(--vscode-editor-background);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .token-counter.warning {
+            background-color: var(--vscode-inputValidation-warningBackground);
+            border: 1px solid var(--vscode-inputValidation-warningBorder);
+        }
+        .token-counter.danger {
+            background-color: var(--vscode-inputValidation-errorBackground);
+            border: 1px solid var(--vscode-inputValidation-errorBorder);
+        }
+        .token-bar {
+            flex: 1;
+            height: 8px;
+            background-color: var(--vscode-progressBar-background);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .token-bar-fill {
+            height: 100%;
+            background-color: #4caf50;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+        .token-bar-fill.warning {
+            background-color: #ff9800;
+        }
+        .token-bar-fill.danger {
+            background-color: #f44336;
+        }
     </style>
 </head>
 <body>
@@ -335,12 +402,18 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
     <div class="input-container">
         <div class="input-row">
             <button id="fileRefBtn" class="file-ref-btn" title="附加檔案參考">@</button>
-            <button id="directoryRefBtn" class="file-ref-btn" title="附加目錄參考 (Ctrl+Shift+D)">📁</button>
+            <button id="quickPickBtn" class="file-ref-btn" title="快速選擇參考 (Ctrl+Shift+P)">⚡</button>
             <input type="text" id="messageInput" placeholder="輸入問題... (使用 @ 選擇檔案/目錄)" />
             <button id="sendBtn">發送</button>
             <button id="clearBtn">清除</button>
         </div>
         <div class="file-refs-display" id="fileRefsDisplay"></div>
+        <div class="token-counter" id="tokenCounter">
+            <span>Token: <strong id="tokenCount">0</strong> / <strong id="maxBudget">50000</strong></span>
+            <div class="token-bar">
+                <div class="token-bar-fill" id="tokenBarFill" style="width: 0%"></div>
+            </div>
+        </div>
     </div>
     
     <script>

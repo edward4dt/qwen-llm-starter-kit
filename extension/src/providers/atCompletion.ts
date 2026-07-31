@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
 import { FileReferenceProvider } from '../utils/file-reference';
+import { ContextManager } from '../utils/contextManager';
 
 export class AtCompletionProvider implements vscode.CompletionItemProvider {
     private readonly fileRefProvider: FileReferenceProvider;
-    private readonly MAX_COMPLETION_FILES = 20;
-    private readonly MAX_COMPLETION_DIRS = 10;
-    private cache: { files: string[]; directories: string[] } | null = null;
+    private readonly MAX_COMPLETION_ITEMS = 30;
+    private cache: string[] | null = null;
 
     constructor() {
         this.fileRefProvider = new FileReferenceProvider();
@@ -38,59 +38,63 @@ export class AtCompletionProvider implements vscode.CompletionItemProvider {
         }
 
         try {
-            // Get workspace files and directories
-            const { files, directories } = await this.getWorkspaceFilesAndDirectories();
+            // Get workspace files using VSCode API (no custom scanDirectories)
+            const files = await this.getWorkspaceFiles();
 
             // Filter based on query (fuzzy search)
             const filteredFiles = query 
                 ? files.filter(file => file.toLowerCase().includes(query.toLowerCase()))
                 : files;
-            
-            const filteredDirs = query
-                ? directories.filter(dir => dir.toLowerCase().includes(query.toLowerCase()))
-                : directories;
 
             const completionItems: vscode.CompletionItem[] = [];
 
-            // Add file completion items
-            const completionFiles = filteredFiles.slice(0, this.MAX_COMPLETION_FILES);
-            completionFiles.forEach(file => {
-                const item = new vscode.CompletionItem(
-                    `@${file}`,
-                    vscode.CompletionItemKind.File
-                );
-                item.insertText = new vscode.SnippetString(`@${file}$0`);
-                item.detail = `檔案：${file}`;
-                item.documentation = new vscode.MarkdownString(`插入 **${file}** 作為參考檔案。`);
-                
-                // Set icon based on file extension
-                const icon = this.getFileIcon(file);
-                if (icon) {
-                    (item as any).iconPath = icon;
+            // Add file and directory completion items from file paths
+            const pathSet = new Set<string>();
+            
+            for (const filePath of filteredFiles.slice(0, this.MAX_COMPLETION_ITEMS)) {
+                // Extract directories from file path
+                const parts = filePath.split(/[\\/]/);
+                for (let i = 1; i < parts.length; i++) {
+                    const dirPath = parts.slice(0, i).join('/');
+                    if (!pathSet.has(dirPath)) {
+                        pathSet.add(dirPath);
+                        const item = new vscode.CompletionItem(
+                            dirPath,
+                            vscode.CompletionItemKind.Folder
+                        );
+                        item.insertText = new vscode.SnippetString(`${dirPath}$0`);
+                        item.detail = `目錄：${dirPath}`;
+                        item.documentation = new vscode.MarkdownString(`插入 **${dirPath}** 目錄下的所有檔案作為參考。`);
+                        (item as any).iconPath = new vscode.ThemeIcon('folder');
+                        completionItems.push(item);
+                    }
                 }
                 
-                completionItems.push(item);
-            });
-
-            // Add directory completion items
-            const completionDirs = filteredDirs.slice(0, this.MAX_COMPLETION_DIRS);
-            completionDirs.forEach(dir => {
-                const item = new vscode.CompletionItem(
-                    `@目錄:${dir}`,
-                    vscode.CompletionItemKind.Folder
-                );
-                item.insertText = new vscode.SnippetString(`@目錄:${dir}$0`);
-                item.detail = `目錄：${dir}`;
-                item.documentation = new vscode.MarkdownString(`插入 **${dir}** 目錄下的所有檔案作為參考。`);
-                (item as any).iconPath = new vscode.ThemeIcon('folder');
-                
-                completionItems.push(item);
-            });
+                // Add file completion item
+                if (!pathSet.has(filePath)) {
+                    pathSet.add(filePath);
+                    const item = new vscode.CompletionItem(
+                        filePath,
+                        vscode.CompletionItemKind.File
+                    );
+                    item.insertText = new vscode.SnippetString(`${filePath}$0`);
+                    item.detail = `檔案：${filePath}`;
+                    item.documentation = new vscode.MarkdownString(`插入 **${filePath}** 作為參考檔案。`);
+                    
+                    // Set icon based on file extension
+                    const icon = this.getFileIcon(filePath);
+                    if (icon) {
+                        (item as any).iconPath = icon;
+                    }
+                    
+                    completionItems.push(item);
+                }
+            }
 
             // Add "more items" hint if there are more results
-            if (filteredFiles.length > this.MAX_COMPLETION_FILES || filteredDirs.length > this.MAX_COMPLETION_DIRS) {
+            if (filteredFiles.length > this.MAX_COMPLETION_ITEMS) {
                 const moreItem = new vscode.CompletionItem(
-                    `... 還有更多檔案和目錄 (請輸入更多關鍵字過濾)`,
+                    `... 還有更多檔案 (請輸入更多關鍵字過濾)`,
                     vscode.CompletionItemKind.Text
                 );
                 moreItem.insertText = '';
@@ -107,15 +111,14 @@ export class AtCompletionProvider implements vscode.CompletionItemProvider {
     }
 
     /**
-     * Get workspace files and directories with caching
+     * Get workspace files using VSCode API (no custom recursive scan)
      */
-    async getWorkspaceFilesAndDirectories(): Promise<{ files: string[]; directories: string[] }> {
+    async getWorkspaceFiles(): Promise<string[]> {
         if (this.cache) {
             return this.cache;
         }
 
         const files: string[] = [];
-        const directories: string[] = [];
 
         try {
             const allFiles = await vscode.workspace.findFiles(
@@ -138,59 +141,14 @@ export class AtCompletionProvider implements vscode.CompletionItemProvider {
                 files.push(relativePath);
             }
 
-            // Get directories by scanning workspace folders
-            const workspaceFolders = vscode.workspace.workspaceFolders || [];
-            for (const folder of workspaceFolders) {
-                await this.scanDirectories(folder.uri, directories);
-            }
-
-            // Sort both arrays
+            // Sort alphabetically
             files.sort((a, b) => a.localeCompare(b));
-            directories.sort((a, b) => a.localeCompare(b));
 
-            this.cache = { files, directories };
-            return { files, directories };
+            this.cache = files;
+            return files;
         } catch (error) {
             console.error('Error getting workspace files:', error);
-            return { files: [], directories: [] };
-        }
-    }
-
-    /**
-     * Recursively scan directories
-     */
-    private async scanDirectories(uri: vscode.Uri, directories: string[], depth: number = 0): Promise<void> {
-        const maxDepth = 5; // Limit recursion depth
-        const excludedDirs = ['node_modules', '.git', 'dist', 'build', 'vendor'];
-
-        if (depth > maxDepth) {
-            return;
-        }
-
-        try {
-            const entries = await vscode.workspace.fs.readDirectory(uri);
-
-            for (const [name, type] of entries) {
-                if (type === vscode.FileType.Directory) {
-                    // Skip excluded directories
-                    if (excludedDirs.includes(name)) {
-                        continue;
-                    }
-
-                    const dirUri = vscode.Uri.joinPath(uri, name);
-                    const workspaceFolder = vscode.workspace.getWorkspaceFolder(dirUri);
-                    const relativePath = workspaceFolder
-                        ? vscode.workspace.asRelativePath(dirUri)
-                        : dirUri.fsPath;
-
-                    directories.push(relativePath);
-
-                    // Recursively scan subdirectories
-                    await this.scanDirectories(dirUri, directories, depth + 1);
-                }
-            }
-        } catch (error) {
-            console.error(`Error reading directory ${uri.fsPath}:`, error);
+            return [];
         }
     }
 
@@ -244,5 +202,157 @@ export class AtCompletionProvider implements vscode.CompletionItemProvider {
      */
     clearCache(): void {
         this.cache = null;
+    }
+}
+
+/**
+ * QuickPick Reference Picker for unified context selection
+ * Provides fuzzy search and instant preview
+ */
+export class QuickPickReferencePicker {
+    private readonly fileRefProvider: FileReferenceProvider;
+    private readonly contextManager: ContextManager;
+
+    constructor(contextManager: ContextManager) {
+        this.fileRefProvider = new FileReferenceProvider();
+        this.contextManager = contextManager;
+    }
+
+    /**
+     * Show QuickPick for selecting files/folders as context references
+     */
+    async showReferencePicker(): Promise<void> {
+        try {
+            const files = await this.getWorkspaceFiles();
+            
+            // Create QuickPick items with file and directory options
+            const quickPickItems: vscode.QuickPickItem[] = [];
+            const pathSet = new Set<string>();
+            
+            // Add directories extracted from file paths
+            for (const filePath of files) {
+                const parts = filePath.split(/[\\/]/);
+                for (let i = 1; i < parts.length; i++) {
+                    const dirPath = parts.slice(0, i).join('/');
+                    if (!pathSet.has(dirPath)) {
+                        pathSet.add(dirPath);
+                        quickPickItems.push({
+                            label: `$(folder) ${dirPath}`,
+                            description: '目錄',
+                            detail: `插入 ${dirPath} 目錄下的所有檔案`
+                        });
+                    }
+                }
+                
+                if (!pathSet.has(filePath)) {
+                    pathSet.add(filePath);
+                    const icon = this.getFileIconKind(filePath);
+                    quickPickItems.push({
+                        label: `${icon} ${filePath}`,
+                        description: '檔案',
+                        detail: `插入 ${filePath} 作為參考`
+                    });
+                }
+            }
+            
+            const quickPick = vscode.window.createQuickPick();
+            quickPick.items = quickPickItems;
+            quickPick.placeholder = '輸入關鍵字搜尋檔案或目錄...';
+            quickPick.title = '選擇上下文參考';
+            quickPick.matchOnDescription = true;
+            quickPick.matchOnDetail = true;
+            
+            quickPick.onDidAccept(async () => {
+                const selectedItems = quickPick.selectedItems;
+                if (selectedItems.length > 0) {
+                    const selectedItem = selectedItems[0];
+                    const label = selectedItem.label.replace(/^[$\(].*[\)]\s*/, '');
+                    
+                    // Check if it's a directory or file
+                    if (selectedItem.description === '目錄') {
+                        await this.contextManager.addFolder(label);
+                    } else {
+                        await this.contextManager.addFile(label);
+                    }
+                    
+                    vscode.window.showInformationMessage(`已新增 ${label} 到上下文`);
+                    quickPick.hide();
+                }
+            });
+            
+            quickPick.onDidChangeValue(() => {
+                // Filter items based on input
+                const value = quickPick.value.toLowerCase();
+                if (value) {
+                    quickPick.items = quickPickItems.filter(item => 
+                        item.label.toLowerCase().includes(value) ||
+                        item.description?.toLowerCase().includes(value) ||
+                        item.detail?.toLowerCase().includes(value)
+                    );
+                } else {
+                    quickPick.items = quickPickItems;
+                }
+            });
+            
+            quickPick.show();
+        } catch (error) {
+            console.error('Error showing reference picker:', error);
+            vscode.window.showErrorMessage(`選擇參考時發生錯誤：${error instanceof Error ? error.message : '未知錯誤'}`);
+        }
+    }
+
+    /**
+     * Get workspace files using VSCode API
+     */
+    private async getWorkspaceFiles(): Promise<string[]> {
+        const files: string[] = [];
+
+        try {
+            const allFiles = await vscode.workspace.findFiles(
+                '**/*',
+                '**/node_modules/**,**/.git/**,**/dist/**,**/build/**,**/*.min.js'
+            );
+
+            for (const file of allFiles) {
+                if (this.fileRefProvider['isBinaryFile'](file.fsPath)) {
+                    continue;
+                }
+
+                const workspaceFolder = vscode.workspace.getWorkspaceFolder(file);
+                const relativePath = workspaceFolder
+                    ? vscode.workspace.asRelativePath(file)
+                    : file.fsPath;
+
+                files.push(relativePath);
+            }
+
+            files.sort((a, b) => a.localeCompare(b));
+            return files;
+        } catch (error) {
+            console.error('Error getting workspace files:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Get appropriate icon kind for file based on extension
+     */
+    private getFileIconKind(filePath: string): vscode.QuickPickItem['label'] {
+        const ext = filePath.substring(filePath.lastIndexOf('.') + 1).toLowerCase();
+        
+        const iconMap: Record<string, string> = {
+            'ts': 'file-type-typescript',
+            'tsx': 'file-type-typescript',
+            'js': 'file-type-javascript',
+            'py': 'file-type-python',
+            'java': 'file-type-java',
+            'md': 'file-type-markdown',
+            'json': 'file-type-json',
+            'yaml': 'file-type-yaml',
+            'yml': 'file-type-yaml'
+        };
+        
+        const iconName = iconMap[ext] || 'file-code';
+        return `$(${iconName})`;
     }
 }
