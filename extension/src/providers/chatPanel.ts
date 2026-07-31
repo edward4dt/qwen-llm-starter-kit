@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { LiteLLMClient } from '../utils/litellm-client';
-import { ChatMessage, FileReference } from '../types';
+import { ChatMessage, FileReference, ContextReference } from '../types';
+import { ContextManager } from '../utils/contextManager';
 import { FileReferenceProvider } from '../utils/file-reference';
 import { ConfigManager } from '../utils/configManager';
 
@@ -10,6 +11,7 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
     private _view?: vscode.WebviewView;
     private _client: LiteLLMClient;
     private _messages: ChatMessage[] = [];
+    private _contextManager: ContextManager;
     private _fileRefProvider: FileReferenceProvider;
     private _pendingFileRefs: FileReference[] = [];
     
@@ -20,6 +22,7 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
         client: LiteLLMClient
     ) {
         this._client = client;
+        this._contextManager = new ContextManager();
         this._fileRefProvider = new FileReferenceProvider();
     }
     
@@ -61,6 +64,10 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
         try {
             const fileRefs = await this._fileRefProvider.showFilePicker();
             if (fileRefs.length > 0) {
+                // Add to ContextManager for unified management
+                for (const fileRef of fileRefs) {
+                    await this._contextManager.addFile(fileRef.filePath, fileRef.content, fileRef.language);
+                }
                 this._pendingFileRefs.push(...fileRefs);
                 this._view?.webview.postMessage({ 
                     type: 'fileRefSelected', 
@@ -80,6 +87,10 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
         try {
             const fileRefs = await this._fileRefProvider.showDirectoryPicker();
             if (fileRefs.length > 0) {
+                // Add to ContextManager for unified management
+                for (const fileRef of fileRefs) {
+                    await this._contextManager.addFile(fileRef.filePath, fileRef.content, fileRef.language);
+                }
                 this._pendingFileRefs.push(...fileRefs);
                 this._view?.webview.postMessage({ 
                     type: 'fileRefSelected', 
@@ -107,10 +118,12 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
         let finalText = text;
         let contextReferences: FileReference[] = [];
         
-        // If there are file references, inject them into the message
+        // If there are file references, inject them into the message using ContextManager
         if (allFileRefs.length > 0) {
             contextReferences = allFileRefs;
-            finalText = this._fileRefProvider.injectFileContext(text, allFileRefs);
+            // Use ContextManager's formatForPrompt for unified prompt formatting
+            const contextPrompt = this._contextManager.formatForPrompt();
+            finalText = contextPrompt ? `${contextPrompt}\n\n[QUESTION]\n${text}` : text;
         }
         
         // Add user message to history
